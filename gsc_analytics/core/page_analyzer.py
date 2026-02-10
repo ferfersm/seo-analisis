@@ -2,6 +2,7 @@
 Analizador de páginas (URLs).
 """
 from typing import Dict, List, Optional, Tuple
+import re
 import pandas as pd
 import numpy as np
 from urllib.parse import urlparse
@@ -175,7 +176,6 @@ class PageAnalyzer(BaseAnalyzer):
         df_p2 = self.filtrar_por_fecha(*periodo_2)
         
         if subdominio:
-            import re
             patron = re.escape(subdominio) if isinstance(subdominio, str) else '|'.join(map(re.escape, subdominio))
             df_p1 = df_p1[df_p1['page'].str.contains(patron, na=False)]
             df_p2 = df_p2[df_p2['page'].str.contains(patron, na=False)]
@@ -261,7 +261,6 @@ class PageAnalyzer(BaseAnalyzer):
         rows_p1 = []
         rows_p2 = []
         
-        import re
         for patron in patrones:
             regex = re.escape(patron)
             

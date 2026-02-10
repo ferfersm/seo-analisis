@@ -2,6 +2,7 @@
 Analizador de queries (palabras clave).
 """
 from typing import Dict, List, Optional, Tuple
+import re
 import pandas as pd
 import numpy as np
 
@@ -30,7 +31,6 @@ class QueryAnalyzer(BaseAnalyzer):
         brand_map = self.config.brand_map
         if brand_map:
             patron = '|'.join(map(lambda x: f'({re.escape(x)})', brand_map.keys()))
-            import re
             self.df['matched_brand'] = (
                 self.df['query']
                 .str.extract(f'({patron})', expand=False)
@@ -45,7 +45,6 @@ class QueryAnalyzer(BaseAnalyzer):
         """Identifica queries que contienen keywords importantes."""
         kws_importantes = self.config.keywords_importantes
         if kws_importantes:
-            import re
             patron = '|'.join(map(re.escape, kws_importantes))
             self.df['kw_importante'] = self.df['query'].str.contains(
                 patron, na=False, case=False
@@ -71,7 +70,6 @@ class QueryAnalyzer(BaseAnalyzer):
         
         # Por cada grupo de marca
         for grupo, palabras in self.config.marcas.items():
-            import re
             patron = '|'.join(map(re.escape, palabras))
             subsets[f'solo_{grupo}'] = df[
                 df['query'].str.contains(patron, na=False, case=False)
@@ -205,7 +203,6 @@ class QueryAnalyzer(BaseAnalyzer):
         total_p1 = df_p1[col_metrica].sum()
         
         rows = []
-        import re
         
         for nombre, palabras in zip(nombres_grupos, grupos):
             patron = '|'.join(map(re.escape, palabras))
@@ -261,7 +258,6 @@ class QueryAnalyzer(BaseAnalyzer):
         
         # Filtrar por subdominio si se especifica
         if subdominio:
-            import re
             patron = re.escape(subdominio) if isinstance(subdominio, str) else '|'.join(map(re.escape, subdominio))
             df_p1 = df_p1[df_p1['page'].str.contains(patron, na=False)]
             df_p2 = df_p2[df_p2['page'].str.contains(patron, na=False)]
