@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter/Colab
+.ipynb_checkpoints/
+*.ipynb
+
+# Credentials
+.env
+.env.local
+*.credentials
+*.token
+*.auth
+client_secrets.json
+credentials.json
+
+# Data (nunca subir datos de clientes)
+*.csv
+*.xlsx
+*.xls
+data/
+datos/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
