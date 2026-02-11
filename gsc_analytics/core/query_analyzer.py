@@ -188,16 +188,7 @@ class QueryAnalyzer(BaseAnalyzer):
     ) -> pd.DataFrame:
         """
         Compara métricas por grupos de palabras clave.
-        
-        Args:
-            df_p2: DataFrame período actual
-            df_p1: DataFrame período anterior
-            grupos: Lista de listas de palabras clave por grupo
-            nombres_grupos: Nombres para cada grupo
-            metrica: Métrica a comparar ('clicks', 'impressions')
-            
-        Returns:
-            DataFrame con comparación
+        Optimizado: una sola pasada con regex masivo (como TrafficAnalyzer original).
         """
         if nombres_grupos is None:
             nombres_grupos = [f'Grupo_{i+1}' for i in range(len(grupos))]
@@ -206,17 +197,38 @@ class QueryAnalyzer(BaseAnalyzer):
         total_p2 = df_p2[col_metrica].sum()
         total_p1 = df_p1[col_metrica].sum()
         
-        rows = []
-        
+        # Crear mapa de palabra -> grupo para lookup rápido
+        palabra_a_grupo = {}
         for nombre, palabras in zip(nombres_grupos, grupos):
-            patron = '|'.join(map(re.escape, palabras))
-            
-            # Filtrar por grupo en cada período
-            mask_p2 = df_p2['query'].str.contains(patron, na=False, case=False)
-            mask_p1 = df_p1['query'].str.contains(patron, na=False, case=False)
-            
-            val_p2 = df_p2.loc[mask_p2, col_metrica].sum()
-            val_p1 = df_p1.loc[mask_p1, col_metrica].sum()
+            for palabra in palabras:
+                palabra_a_grupo[palabra.lower()] = nombre
+        
+        # Un solo regex con todas las palabras de todos los grupos
+        todas_palabras = list(palabra_a_grupo.keys())
+        patron = '|'.join(map(re.escape, todas_palabras))
+        
+        # Función para procesar un dataframe y sumar por grupo
+        def procesar_df(df):
+            # Extraer coincidencias
+            matches = df['query'].str.extract(f'({patron})', expand=False)
+            # Mapear a grupo
+            grupos_encontrados = matches.str.lower().map(palabra_a_grupo)
+            # Sumar métrica por grupo
+            resultado = {}
+            for grupo in nombres_grupos:
+                mask = grupos_encontrados == grupo
+                resultado[grupo] = df.loc[mask, col_metrica].sum()
+            return resultado
+        
+        # Procesar ambos períodos
+        vals_p1 = procesar_df(df_p1)
+        vals_p2 = procesar_df(df_p2)
+        
+        # Construir resultado
+        rows = []
+        for nombre in nombres_grupos:
+            val_p1 = vals_p1[nombre]
+            val_p2 = vals_p2[nombre]
             
             var_abs, var_pct = calcular_variacion(val_p1, val_p2)
             share_p2 = calcular_share(val_p2, total_p2)
