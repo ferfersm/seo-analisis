@@ -27,15 +27,19 @@ class QueryAnalyzer(BaseAnalyzer):
         self._identificar_kws_importantes()
     
     def _aplicar_mapeo_marcas(self):
-        """Aplica mapeo de marcas a cada query."""
+        """Aplica mapeo de marcas a cada query (optimizado)."""
         brand_map = self.config.brand_map
         if brand_map:
-            patron = '|'.join(map(lambda x: f'({re.escape(x)})', brand_map.keys()))
-            self.df['matched_brand'] = (
-                self.df['query']
-                .str.extract(f'({patron})', expand=False)
-                .map(brand_map)
-            )
+            # Método optimizado: verificar cada query contra cada grupo
+            # más rápido que un regex masivo con cientos de términos
+            self.df['matched_brand'] = None
+            
+            for grupo, palabras in self.config.marcas.items():
+                # Crear patrón solo para este grupo (más pequeño y rápido)
+                patron = '|'.join(map(re.escape, palabras))
+                mask = self.df['query'].str.contains(patron, case=False, na=False)
+                self.df.loc[mask, 'matched_brand'] = grupo
+            
             self.df['is_brand'] = self.df['matched_brand'].notna()
         else:
             self.df['matched_brand'] = None
